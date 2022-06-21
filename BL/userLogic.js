@@ -24,10 +24,10 @@ exports.register = async (user) => {
     return await userController.create(user)
 }
 
-exports.login = async (email, password) => {
-    if (!email || !password) throw ({ code: 409, message: "missing data" })
-    const Euser = await userController.read({ email }, "+password")
-    if (Euser.length == 0) throw ({ code: 404, message: "user not found" })
-    if (password !== Euser[0].password) throw ({ code: 503, message: "not auth" })
-    return createToken(Euser[0]._id)
+exports.login = async (username, password) => {
+    if (!username || !password) throw ({ code: 409, message: "missing data" })
+    const Euser = await userController.readOne({ username }, "+password")
+    if (!Euser) throw ({ code: 404, message: "user not found" })
+    if (password !== Euser.password) throw ({ code: 503, message: "not auth" })
+    return createToken(Euser._id)
 }
