@@ -1,5 +1,6 @@
 const userController = require('../DL/controllers/userController')
-const { CreateToken, createToken } = require('./jwt')
+const { createToken } = require('../middleware/jwt')
+const bcrypt = require('bcrypt')
 
 
 exports.getAllUsers = async () => {
@@ -18,16 +19,31 @@ exports.createUser = (user) => {
     return userController.create(user)
 }
 
-exports.register = async (user) => {
-    const Euser = await userController.read({ email: user.email })
-    if (Euser.length) throw ({ code: 400, message: "this email is already exist" })
-    return await userController.create(user)
+exports.register = async (data) => {
+    const { email, password, firstName, lastName } = data
+    if (!email || !password || !firstName || !lastName) {
+        throw { code: 400, message: "missing data" }
+    }
+    const Euser = await userController.read({ email: email })
+    console.log(data);
+    if (Euser.length) throw ({ code: 405, message: "this email is already exist" })
+    const salt = await bcrypt.genSalt()
+    const hashedPassword = await bcrypt.hash(password, salt)
+    data.salt = salt
+    data.hashedPassword = hashedPassword
+    delete data.password
+    const user = await userController.create(data)
+    const token = createToken(user._id)
+    return token
 }
 
-exports.login = async (username, password) => {
-    if (!username || !password) throw ({ code: 409, message: "missing data" })
-    const Euser = await userController.readOne({ username }, "+password")
+exports.login = async (data) => {
+    const { email, password } = data
+    if (!email || !password) throw ({ code: 409, message: "missing data" })
+    const Euser = await userController.readOne({ email }, "+hashedPassword +salt")
     if (!Euser) throw ({ code: 404, message: "user not found" })
-    if (password !== Euser.password) throw ({ code: 503, message: "not auth" })
+    const hashedPassword = await bcrypt.hash(password, Euser.salt)
+    console.log(Euser, hashedPassword);
+    if (hashedPassword !== Euser.hashedPassword) throw ({ code: 503, message: "not auth" })
     return createToken(Euser._id)
 }
