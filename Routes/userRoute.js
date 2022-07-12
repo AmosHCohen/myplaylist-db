@@ -3,10 +3,6 @@ const express = require("express"),
 const userLogic = require('../BL/userLogic')
 const { authJWT } = require("../Middleware/auth")
 
-// router.all('/test', authJWT, (req, res) => {
-//     res.send("test")
-// })
-
 router.post("/login", async (req, res) => {
     try {
         res.send(await userLogic.login(req.body))
@@ -18,7 +14,7 @@ router.post("/login", async (req, res) => {
 router.post("/register", async (req, res) => {
     try {
         const newUser = await userLogic.register(req.body)
-        res.send('registered')
+        res.send(newUser)
     } catch (error) {
         if (error.code) {
             res.status(error.code).send({ message: error.msg })
@@ -26,9 +22,13 @@ router.post("/register", async (req, res) => {
         } else {
             res.status(500).send({ message: "something went wronge" })
         }
-
-        // res.status(500).send("someting went wrong")
     }
+})
+
+router.get("/getid", authJWT, async (req, res) => {
+    console.log("i'm alive");
+    console.log("getID", req.id.id);
+    userLogic.getUserById(req.id.id)
 })
 
 module.exports = router
