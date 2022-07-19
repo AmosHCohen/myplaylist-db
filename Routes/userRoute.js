@@ -26,8 +26,6 @@ router.post("/register", async (req, res) => {
 })
 
 router.get("/getid", authJWT, async (req, res) => {
-    console.log("i'm alive");
-    console.log("getID", req.id.id);
     const user = await userLogic.getUserById(req.id.id)
     res.send(user)
 })
